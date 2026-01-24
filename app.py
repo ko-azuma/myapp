@@ -58,6 +58,18 @@ class Like(db.Model):
     __table_args__ = (
         db.UniqueConstraint('user_id', 'post_id', name='unique_user_post_like'),
     )
+# ==========================
+# 返信（コメント）モデル
+# ==========================
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=db.func.now())
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+
+    user = db.relationship('User', backref=db.backref('comments', lazy=True))
+    post = db.relationship('Post', backref=db.backref('comments', lazy=True))
 
 # ==========================
 # ルート
@@ -87,8 +99,14 @@ def register():
 
     if request.method == 'POST':
         name = request.form['name']
+        if len(name) > 50 :
+            return "名前は50文字以内で入力してください"
         age = request.form['age']
+        if age < 0 or age > 150 :
+            return "年齢は0~150の範囲で入力してください"
         password = request.form['password']
+        if len(password) > 50 or len(password) < 4 :
+            return "パスワードは4文字以上50字以内にしてください"
         file = request.files['image']
         if not name or not age or not password or file.filename == '':
             app.logger.warning('入力不備あり')
@@ -143,7 +161,8 @@ def create_post():
         if not content:
             flash('内容を入力してください')
             return redirect(url_for('create_post'))
-
+        if len(content) > 200 :
+            return '200字以内にしてください'
         post = Post(user_id=session['user_id'], content=content)
         db.session.add(post)
         db.session.commit()
@@ -176,6 +195,96 @@ def like(post_id):
         app.logger.info(f'いいね追加: user={user_id}, post={post_id}')
 
     db.session.commit()
+    return redirect(url_for('timeline'))
+# 投稿編集（インライン編集用）
+@app.route('/edit/<int:post_id>', methods=['POST'])
+def edit_post(post_id):
+    if 'user_id' not in session:
+        flash('ログインしてください')
+        return redirect(url_for('login'))
+
+    post = Post.query.get_or_404(post_id)
+
+    # 本人チェック（超重要）
+    if post.user_id != session['user_id']:
+        app.logger.warning(
+            f'不正な編集試行: user={session["user_id"]}, post={post_id}'
+        )
+        return "権限がありません", 403
+
+    content = request.form['content']
+
+    if not content:
+        return "内容を入力してください"
+
+    if len(content) > 200:
+        return "投稿は200字以内にしてください"
+
+    post.content = content
+    db.session.commit()
+
+    app.logger.info(
+        f'投稿編集: post={post_id}, user={session["user_id"]}'
+    )
+
+    return redirect(url_for('timeline'))
+
+@app.route('/comment/<int:post_id>', methods=['POST'])
+def add_comment(post_id):
+    if 'user_id' not in session:
+        flash('ログインしてください')
+        return redirect(url_for('login'))
+
+    content = request.form.get('content', '').strip()
+    if not content:
+        flash('コメントを入力してください')
+        return redirect(url_for('timeline'))
+    if len(content) > 200:
+        flash('コメントは200字以内で入力してください')
+        return redirect(url_for('timeline'))
+
+    comment = Comment(
+        content=content,
+        user_id=session['user_id'],
+        post_id=post_id
+    )
+    db.session.add(comment)
+    db.session.commit()
+    return redirect(url_for('timeline'))
+# 投稿削除
+@app.route('/delete_post/<int:post_id>', methods=['POST'])
+def delete_post(post_id):
+    if 'user_id' not in session:
+        flash('ログインしてください')
+        return redirect(url_for('login'))
+
+    post = Post.query.get_or_404(post_id)
+    if post.user_id != session['user_id']:
+        flash('他人の投稿は削除できません')
+        return redirect(url_for('timeline'))
+
+    # コメントも一緒に削除
+    Comment.query.filter_by(post_id=post.id).delete()
+    db.session.delete(post)
+    db.session.commit()
+    flash('投稿を削除しました')
+    return redirect(url_for('timeline'))
+
+# コメント削除
+@app.route('/delete_comment/<int:comment_id>', methods=['POST'])
+def delete_comment(comment_id):
+    if 'user_id' not in session:
+        flash('ログインしてください')
+        return redirect(url_for('login'))
+
+    comment = Comment.query.get_or_404(comment_id)
+    if comment.user_id != session['user_id']:
+        flash('他人のコメントは削除できません')
+        return redirect(url_for('timeline'))
+
+    db.session.delete(comment)
+    db.session.commit()
+    flash('コメントを削除しました')
     return redirect(url_for('timeline'))
 
 # ==========================

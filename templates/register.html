@@ -6,9 +6,9 @@
 <body>
     <h1>新規プロフィール登録</h1>
     <form method="POST" enctype="multipart/form-data">
-        名前: <input type="text" name="name"><br><br>
-        年齢: <input type="number" name="age"><br><br>
-        パスワード: <input type="password" name="password"><br><br>
+        名前: <input type="text" name="name" maxlength="50"><br><br>
+        年齢: <input type="number" name="age" min="0" max="150" step="1"><br><br>
+        パスワード(4~50文字): <input type="password" name="password" maxlength="50" minlength="4"><br><br>
         プロフィール画像: <input type="file" name="image"><br><br>
         <input type="submit" value="登録">
     </form>

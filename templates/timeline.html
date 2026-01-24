@@ -2,40 +2,114 @@
 <html>
 <head>
     <title>タイムライン</title>
+    <link rel="stylesheet" href="../static/css/timeline.css">
 </head>
 <body>
+<div class="container">
     <h1>タイムライン</h1>
 
-    {% if 'user_id' in session %}
-        <a href="{{ url_for('create_post') }}">新規投稿</a> |
-        <a href="{{ url_for('users') }}">ユーザー一覧</a> |
-        <a href="{{ url_for('logout') }}">ログアウト</a>
-    {% else %}
-        <a href="{{ url_for('login') }}">ログイン</a>
-    {% endif %}
+    <div class="nav">
+        {% if 'user_id' in session %}
+            <a href="{{ url_for('create_post') }}">新規投稿</a>
+            <a href="{{ url_for('users') }}">ユーザー一覧</a>
+            <a href="{{ url_for('logout') }}">ログアウト</a>
+        {% else %}
+            <a href="{{ url_for('login') }}">ログイン</a>
+        {% endif %}
+    </div>
+
     <hr>
 
     {% for post in posts %}
-        <p>
-            <strong>{{ post.user.name }}</strong> さん<br>
-            {{ post.content }}<br>
-            <small>{{ post.timestamp.strftime('%Y-%m-%d %H:%M') }}</small><br>
+        <div class="post-card">
+            <div class="post-header">
+                <strong>{{ post.user.name }}</strong>
+                <span class="timestamp">{{ post.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
 
-            <!-- いいね機能ここから -->
-            {% if 'user_id' in session %}
-                <form action="{{ url_for('like', post_id=post.id) }}" method="post" style="display:inline;">
-                    <button type="submit">
-                        👍 （{{ post.like_count }}）
-                    </button>
+                <!-- 投稿削除ボタン（本人のみ） -->
+                {% if 'user_id' in session and post.user_id == session['user_id'] %}
+                    <form class="delete-post-form" action="{{ url_for('delete_post', post_id=post.id) }}" method="post" onsubmit="return confirmDelete('投稿')">
+                        <button type="submit" class="delete-btn">×</button>
+                    </form>
+                {% endif %}
+            </div>
+
+            <!-- 投稿内容 -->
+            <div class="post-content" id="view-{{ post.id }}">
+                {{ post.content }}
+            </div>
+
+            <!-- 編集フォーム（本人のみ） -->
+            {% if 'user_id' in session and post.user_id == session['user_id'] %}
+                <form class="edit-form" id="edit-{{ post.id }}" action="{{ url_for('edit_post', post_id=post.id) }}" method="post">
+                    <textarea name="content" maxlength="200" rows="3">{{ post.content }}</textarea>
+                    <div class="edit-buttons">
+                        <button type="submit">保存</button>
+                        <button type="button" onclick="cancelEdit(this)">キャンセル</button>
+                    </div>
                 </form>
-            {% else %}
-                👍 （{{ post.like_count }}）
+                <button class="edit-btn" type="button" data-post-id="{{ post.id }}" onclick="startEdit(this)">編集</button>
             {% endif %}
-            <!-- いいね機能ここまで -->
-        </p>
-        <hr>
+
+            <!-- いいねボタン -->
+            <div class="post-actions">
+                {% if 'user_id' in session %}
+                    <form action="{{ url_for('like', post_id=post.id) }}" method="post" style="display:inline;">
+                        <button type="submit">👍 {{ post.like_count }}</button>
+                    </form>
+                {% else %}
+                    👍 {{ post.like_count }}
+                {% endif %}
+            </div>
+
+            <!-- コメント欄 -->
+            <div class="comments-section">
+                {% for comment in post.comments %}
+                    <div class="comment">
+                        <strong>{{ comment.user.name }}</strong>{{ comment.content }}
+                        <span class="comment-timestamp">{{ comment.timestamp.strftime('%Y-%m-%d %H:%M') }}</span>
+
+                        {% if 'user_id' in session and comment.user_id == session['user_id'] %}
+                            <form class="delete-comment-form" action="{{ url_for('delete_comment', comment_id=comment.id) }}" method="post" onsubmit="return confirmDelete('コメント')">
+                                <button type="submit" class="delete-btn">×</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <p class="no-comments">コメントはまだありません</p>
+                {% endfor %}
+
+                {% if 'user_id' in session %}
+                    <form class="comment-form" action="{{ url_for('add_comment', post_id=post.id) }}" method="post">
+                        <input type="text" name="content" maxlength="200" placeholder="返信を入力" required>
+                        <button type="submit">返信</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
     {% else %}
         <p>投稿はまだありません。</p>
     {% endfor %}
+</div>
+
+<script>
+function startEdit(button) {
+    const id = button.dataset.postId;
+    document.getElementById("view-" + id).style.display = "none";
+    document.getElementById("edit-" + id).style.display = "block";
+}
+
+function cancelEdit(button) {
+    const form = button.closest("form");
+    const id = form.id.replace("edit-", "");
+    form.style.display = "none";
+    document.getElementById("view-" + id).style.display = "block";
+}
+
+// 削除確認ダイアログ
+function confirmDelete(type) {
+    return confirm(`本当にこの${type}を削除してもよろしいですか？`);
+}
+</script>
 </body>
 </html>

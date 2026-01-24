@@ -1,0 +1,245 @@
+/* =============================
+   基本スタイル（PC向け）
+   ============================= */
+
+/* 全体 */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f9f9f9;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 80%;
+    max-width: 800px;
+    margin: 20px auto;
+    background: #fff;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    border-radius: 8px;
+}
+
+/* ナビゲーション */
+.nav a {
+    margin-right: 15px;
+    text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
+}
+
+.nav a:hover {
+    text-decoration: underline;
+}
+
+/* 投稿カード */
+.post-card {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    background-color: #fdfdfd;
+}
+
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.timestamp {
+    font-size: 0.8em;
+    color: #888;
+}
+
+/* 投稿内容 */
+.post-content {
+    font-size: 1em;
+    margin-bottom: 10px;
+}
+
+/* 編集フォーム */
+.edit-form {
+    display: none;
+    margin-bottom: 10px;
+}
+
+.edit-form textarea {
+    width: 100%;
+    padding: 5px;
+    font-size: 1em;
+    resize: vertical;
+}
+
+.edit-buttons {
+    margin-top: 5px;
+}
+
+.edit-buttons button {
+    margin-right: 5px;
+}
+
+.edit-btn {
+    margin-bottom: 10px;
+}
+
+/* アクション（いいね） */
+.post-actions button {
+    background-color: #e7f3ff;
+    border: 1px solid #007bff;
+    border-radius: 4px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.post-actions button:hover {
+    background-color: #d0e7ff;
+}
+
+/* コメント欄 */
+.comments-section {
+    margin-left: 15px;
+    margin-top: 10px;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+}
+
+.comment {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.comment-timestamp {
+    font-size: 0.75em;
+    color: #888;
+    margin-left: 5px;
+}
+
+.no-comments {
+    color: #aaa;
+    font-style: italic;
+}
+
+/* コメントフォーム */
+.comment-form {
+    margin-top: 5px;
+    display: flex;
+    gap: 5px;
+    flex-wrap: 5px;
+}
+
+.comment-form input {
+    flex: 1;
+    min-width: 0;
+    padding: 5px 10px;
+    font-size: 0.9em;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    height: 36px;
+    box-sizing: border-box;
+}
+
+.comment-form button {
+    padding: 0 12px;
+    font-size: 0.9em;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    height: 36px;
+    flex-shrink: 0;
+}
+
+.comment-form button:hover {
+    background-color: #0056b3;
+}
+
+/* 投稿・コメント削除ボタン */
+.delete-btn {
+    background: none;
+    border: none;
+    color: #ff4d4d;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1em;
+}
+
+.delete-btn:hover {
+    color: #ff0000;
+}
+
+.delete-post-form {
+    display: inline;
+    float: right;
+}
+
+.delete-comment-form {
+    display: inline;
+    margin-left: 10px;
+}
+
+/* =============================
+   レスポンシブ（スマホ/タブレット）
+   ============================= */
+@media (max-width: 768px) {
+    .container {
+        width: 95%;
+        margin: 10px auto;
+        padding: 15px;
+    }
+
+    .nav a {
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    .post-card {
+        padding: 10px;
+    }
+
+    .post-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .delete-post-form {
+        float: none;
+        margin-top: 5px;
+    }
+
+    .comment {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .comment-timestamp {
+        margin-left: 0;
+        margin-top: 2px;
+    }
+
+    .comment-form {
+        flex-direction: column;
+    }
+
+    .comment-form input, .comment-form button {
+        width: 100%;
+    }
+
+    .edit-buttons button {
+        width: 48%;
+        margin-bottom: 5px;
+    }
+
+    .edit-btn {
+        width: 100%;
+    }
+
+    .post-actions button {
+        width: 100%;
+        margin-top: 5px;
+    }
+}
