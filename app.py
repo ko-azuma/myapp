@@ -38,9 +38,22 @@ class User(db.Model):
     image_filename = db.Column(db.String(100))
     password_hash = db.Column(db.String(3000))
 
+class Post(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=db.func.now())
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', backref=db.backref('posts', lazy=True))
+
 # ==========================
 # ルート
 # ==========================
+# ホーム（タイムライン）
+@app.route('/')
+def timeline():
+    posts = Post.query.order_by(Post.timestamp.desc()).all()
+    app.logger.info('タイムラインを表示')
+    return render_template('timeline.html', posts=posts)
 # ユーザー一覧
 @app.route('/users')
 def users():
@@ -93,18 +106,37 @@ def login():
         if user and check_password_hash(user.password_hash, password):
             session['user_id'] = user.id
             app.logger.info(f'{name}がログインしました')
-            return redirect(url_for('users'))
+            return redirect(url_for('timeline'))
         else:
             app.logger.warning('ログイン失敗')
             return 'ログイン失敗: ユーザー名またはパスワードが間違っています'
     return render_template('login.html')
-
 # ログアウト
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)
     app.logger.info('ログアウトしました')
     return redirect(url_for('login'))
+# 投稿作成
+@app.route('/post', methods=['GET', 'POST'])
+def create_post():
+    if 'user_id' not in session:
+        flash('ログインしてください')
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        content = request.form['content']
+        if not content:
+            flash('内容を入力してください')
+            return redirect(url_for('create_post'))
+
+        post = Post(user_id=session['user_id'], content=content)
+        db.session.add(post)
+        db.session.commit()
+        app.logger.info(f'新規投稿が作成されました (ユーザーID: {session["user_id"]})')
+        return redirect(url_for('timeline'))
+
+    return render_template('create_post.html')
 # ==========================
 # 初回起動 以下を処理する場合は、「python app.py」で実行する
 # ==========================
