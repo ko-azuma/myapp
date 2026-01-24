@@ -5,6 +5,7 @@
 </head>
 <body>
     <h1>タイムライン</h1>
+
     {% if 'user_id' in session %}
         <a href="{{ url_for('create_post') }}">新規投稿</a> |
         <a href="{{ url_for('users') }}">ユーザー一覧</a> |
@@ -13,11 +14,24 @@
         <a href="{{ url_for('login') }}">ログイン</a>
     {% endif %}
     <hr>
+
     {% for post in posts %}
         <p>
             <strong>{{ post.user.name }}</strong> さん<br>
             {{ post.content }}<br>
-            <small>{{ post.timestamp.strftime('%Y-%m-%d %H:%M') }}</small>
+            <small>{{ post.timestamp.strftime('%Y-%m-%d %H:%M') }}</small><br>
+
+            <!-- いいね機能ここから -->
+            {% if 'user_id' in session %}
+                <form action="{{ url_for('like', post_id=post.id) }}" method="post" style="display:inline;">
+                    <button type="submit">
+                        👍 （{{ post.like_count }}）
+                    </button>
+                </form>
+            {% else %}
+                👍 （{{ post.like_count }}）
+            {% endif %}
+            <!-- いいね機能ここまで -->
         </p>
         <hr>
     {% else %}
@@ -25,4 +39,3 @@
     {% endfor %}
 </body>
 </html>
-

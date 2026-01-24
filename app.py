@@ -37,13 +37,27 @@ class User(db.Model):
     age = db.Column(db.Integer)
     image_filename = db.Column(db.String(100))
     password_hash = db.Column(db.String(3000))
-
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=db.func.now())
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User', backref=db.backref('posts', lazy=True))
+
+    likes = db.relationship('Like', backref='post', lazy='dynamic')
+
+    @property
+    def like_count(self):
+        return self.likes.count()
+
+class Like(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'post_id', name='unique_user_post_like'),
+    )
 
 # ==========================
 # ルート
@@ -137,6 +151,33 @@ def create_post():
         return redirect(url_for('timeline'))
 
     return render_template('create_post.html')
+
+@app.route('/like/<int:post_id>', methods=['POST'])
+def like(post_id):
+    if 'user_id' not in session:
+        flash('ログインしてください')
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+
+    existing_like = Like.query.filter_by(
+        user_id=user_id,
+        post_id=post_id
+    ).first()
+
+    if existing_like:
+        # いいね解除
+        db.session.delete(existing_like)
+        app.logger.info(f'いいね解除: user={user_id}, post={post_id}')
+    else:
+        # いいね追加
+        like = Like(user_id=user_id, post_id=post_id)
+        db.session.add(like)
+        app.logger.info(f'いいね追加: user={user_id}, post={post_id}')
+
+    db.session.commit()
+    return redirect(url_for('timeline'))
+
 # ==========================
 # 初回起動 以下を処理する場合は、「python app.py」で実行する
 # ==========================
