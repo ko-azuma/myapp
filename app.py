@@ -101,8 +101,10 @@ def register():
         name = request.form['name']
         if len(name) > 50 :
             return "名前は50文字以内で入力してください"
-        age = request.form['age']
-        if age < 0 or age > 150 :
+        age = request.form.get('age', type=int)
+        if age is None:
+            return "年齢は数字で入力してください"
+        if not (0 <= age <= 150):
             return "年齢は0~150の範囲で入力してください"
         password = request.form['password']
         if len(password) > 50 or len(password) < 4 :
@@ -228,7 +230,7 @@ def edit_post(post_id):
     )
 
     return redirect(url_for('timeline'))
-
+#　コメント機能
 @app.route('/comment/<int:post_id>', methods=['POST'])
 def add_comment(post_id):
     if 'user_id' not in session:
